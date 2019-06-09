@@ -22,3 +22,7 @@ func (u *User) Login(name, pass string) {
 	u.Username = name
 	u.Password = pass
 }
+
+func (u *User) SetApiToken(apiToken string) {
+	u.APIToken = apiToken
+}

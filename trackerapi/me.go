@@ -21,10 +21,26 @@ var (
 
 func Me() {
 	setCredentials()
-	parse(makeRequest())
+	if currentUser.APIToken != "" {
+		makeTokenRequest()
+	} else {
+		parse(makeRequest())
+	}
 	ioutil.WriteFile(FileLocation, []byte(currentUser.APIToken), 0644)
 }
 
+func makeTokenRequest() []byte {
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", URL, nil)
+	req.Header.Set("X-TrackerToken", currentUser.APIToken)
+	resp, err := client.Do(req)
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Print(err)
+	}
+	fmt.Printf("\n****\nAPI response: \n%s\n", string(body))
+	return body
+}
 func makeRequest() []byte {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", URL, nil)
@@ -48,14 +64,36 @@ func parse(body []byte) {
 	currentUser.APIToken = meResp.APIToken
 }
 
-func setCredentials() {
-	fmt.Fprint(Stdout, "Username: ")
-	var username = cmdutil.ReadLine()
-	cmdutil.Silence()
-	fmt.Fprint(Stdout, "Password: ")
+func readApiToken() (bool, string) {
 
-	var password = cmdutil.ReadLine()
-	currentUser.Login(username, password)
+	data, err := ioutil.ReadFile(FileLocation)
+
+	if err != nil {
+		fmt.Println("File reading error", err)
+		return false, ""
+	}
+	if string(data) == "" {
+		return false, ""
+	} else {
+		return true, string(data)
+	}
+}
+func setCredentials() {
+
+	isToken, token := readApiToken()
+
+	if isToken {
+		currentUser.APIToken = token
+	} else {
+
+		fmt.Fprint(Stdout, "Username: ")
+		var username = cmdutil.ReadLine()
+		cmdutil.Silence()
+		fmt.Fprint(Stdout, "Password: ")
+
+		var password = cmdutil.ReadLine()
+		currentUser.Login(username, password)
+	}
 	cmdutil.Unsilence()
 }
 
