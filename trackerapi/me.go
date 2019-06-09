@@ -65,9 +65,7 @@ func parse(body []byte) {
 }
 
 func readApiToken() (bool, string) {
-
 	data, err := ioutil.ReadFile(FileLocation)
-
 	if err != nil {
 		fmt.Println("File reading error", err)
 		return false, ""
